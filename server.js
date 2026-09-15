@@ -20,7 +20,7 @@ app.get("/weather/:cidade", async (req, res) => {
 
     const dados = await resposta.json();
 
-    if (!dados.results) {
+    if (!dados.results || dados.results.length === 0) {
       return res.status(404).json({
         erro: "Cidade não encontrada"
       });
@@ -38,12 +38,15 @@ app.get("/weather/:cidade", async (req, res) => {
       cidade: local.name,
       pais: local.country,
       latitude: local.latitude,
-      longitude: local.longitude
+      longitude: local.longitude,
+      temperatura: dadosClima.current.temperature_2m,
+      umidade: dadosClima.current.relative_humidity_2m,
+      vento: dadosClima.current.wind_speed_10m
     });
 
   } catch (erro) {
     res.status(500).json({
-      erro: "Erro ao buscar a cidade"
+      erro: "Erro ao buscar o clima"
     });
   }
 });
