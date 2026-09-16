@@ -34,15 +34,19 @@ app.get("/weather/:cidade", async (req, res) => {
 
     const dadosClima = await respostaClima.json();
 
-    res.json({
-      cidade: local.name,
-      pais: local.country,
-      latitude: local.latitude,
-      longitude: local.longitude,
-      temperatura: dadosClima.current.temperature_2m,
-      umidade: dadosClima.current.relative_humidity_2m,
-      vento: dadosClima.current.wind_speed_10m
-    });
+res.json({
+  cidade: local.name,
+  pais: local.country,
+  localizacao: {
+    latitude: local.latitude,
+    longitude: local.longitude
+  },
+  clima: {
+    temperatura: dadosClima.current.temperature_2m,
+    umidade: dadosClima.current.relative_humidity_2m,
+    vento: dadosClima.current.wind_speed_10m
+  }
+});
 
   } catch (erro) {
     res.status(500).json({
