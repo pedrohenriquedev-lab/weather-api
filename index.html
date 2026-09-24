@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Weather API</title>
+
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+</head>
+
+<body>
+
+    <main class="container">
+
+        <section class="weather-app">
+
+            <h1>Weather API</h1>
+
+            <p class="subtitle">
+                Consulte o clima de qualquer cidade
+            </p>
+
+            <div class="search-area">
+
+                <input
+                    type="text"
+                    id="cidade"
+                    placeholder="Digite uma cidade..."
+                >
+
+                <button id="buscar">
+                    Buscar clima
+                </button>
+
+            </div>
+
+            <p id="mensagem"></p>
+
+            <section id="resultado" class="resultado">
+
+                <h2 id="nome-cidade">Recife</h2>
+
+                <p id="pais">Brasil</p>
+
+           <div class="weather-cards">
+
+    <div class="weather-card">
+        <span>🌡️</span>
+        <h3>Temperatura</h3>
+        <p id="temperatura">-- °C</p>
+    </div>
+
+    <div class="weather-card">
+        <span>💧</span>
+        <h3>Umidade</h3>
+        <p id="umidade">-- %</p>
+    </div>
+
+    <div class="weather-card">
+        <span>💨</span>
+        <h3>Vento</h3>
+        <p id="vento">-- km/h</p>
+    </div>
+
+    <div class="weather-card">
+        <span>🌧️</span>
+        <h3>Precipitação</h3>
+        <p id="precipitacao">-- mm</p>
+    </div>
+
+    <div class="weather-card">
+        <span>🌦️</span>
+        <h3>Chuva</h3>
+        <p id="chuva">-- mm</p>
+    </div>
+
+    <div class="weather-card">
+        <span>⛈️</span>
+        <h3>Pancadas</h3>
+        <p id="pancadas">-- mm</p>
+    </div>
+
+</div>
+
+            </section>
+
+        </section>
+
+    </main>
+
+</body>
+</html>

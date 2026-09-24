@@ -1,6 +1,8 @@
 const express = require("express");
+const cors = require("cors");
 
 const app = express();
+app.use(cors());
 
 const PORT = 3000;
 
@@ -28,9 +30,9 @@ app.get("/weather/:cidade", async (req, res) => {
 
     const local = dados.results[0];
 
-    const respostaClima = await fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${local.latitude}&longitude=${local.longitude}&current=temperature_2m,relative_humidity_2m,wind_speed_10m`
-    );
+  const respostaClima = await fetch(
+  `https://api.open-meteo.com/v1/forecast?latitude=${local.latitude}&longitude=${local.longitude}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,precipitation,rain,showers`
+);
 
     const dadosClima = await respostaClima.json();
 
@@ -44,7 +46,10 @@ res.json({
   clima: {
     temperatura: dadosClima.current.temperature_2m,
     umidade: dadosClima.current.relative_humidity_2m,
-    vento: dadosClima.current.wind_speed_10m
+    vento: dadosClima.current.wind_speed_10m,
+    precipitacao: dadosClima.current.precipitation,
+    chuva: dadosClima.current.rain,
+    pancadas: dadosClima.current.showers
   }
 });
 
