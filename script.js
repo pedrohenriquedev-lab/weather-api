@@ -1,61 +1,135 @@
-const inputCidade = document.getElementById("cidade");
-const botaoBuscar = document.getElementById("buscar");
+const cidadeInput = document.getElementById("cidadeInput");
+const buscarBtn = document.getElementById("buscarBtn");
+const mensagem = document.getElementById("mensagem");
+
+const resultado = document.getElementById("resultado");
+
+const cidadeNome = document.getElementById("cidadeNome");
+const paisNome = document.getElementById("paisNome");
 
 const temperatura = document.getElementById("temperatura");
 const umidade = document.getElementById("umidade");
 const vento = document.getElementById("vento");
-
 const precipitacao = document.getElementById("precipitacao");
-const chuva = document.getElementById("chuva");
-const pancadas = document.getElementById("pancadas");
 
-const nomeCidade = document.getElementById("nome-cidade");
-const pais = document.getElementById("pais");
-const mensagem = document.getElementById("mensagem");
+let mapa;
+let marcador;
 
-botaoBuscar.addEventListener("click", async () => {
-    const cidade = inputCidade.value;
 
-    mensagem.textContent = "";
+/* BUSCAR CIDADE */
 
- if (cidade.trim() === "") {
-    mensagem.textContent = "Digite uma cidade para pesquisar.";
+buscarBtn.addEventListener("click", buscarCidade);
+
+cidadeInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    buscarCidade();
+  }
+});
+
+
+async function buscarCidade() {
+
+  const cidade = cidadeInput.value.trim();
+
+  if (!cidade) {
+    mensagem.textContent = "Digite o nome de uma cidade.";
     return;
-}
+  }
 
-botaoBuscar.textContent = "⏳ Buscando...";
-botaoBuscar.disabled = true;
+  mensagem.textContent = "Buscando informações...";
+  resultado.classList.add("hidden");
 
-    const url = `http://localhost:3000/weather/${encodeURIComponent(cidade)}`;
+  try {
 
-    try {
-    const resposta = await fetch(url);
+    const resposta = await fetch(
+      `http://localhost:3000/weather/${encodeURIComponent(cidade)}`
+    );
 
     const dados = await resposta.json();
 
     if (!resposta.ok) {
-        mensagem.textContent = dados.erro;
-        return;
+      throw new Error(dados.erro || "Cidade não encontrada.");
     }
 
-    temperatura.textContent = `${dados.clima.temperatura} °C`;
-    umidade.textContent = `${dados.clima.umidade} %`;
-    vento.textContent = `${dados.clima.vento} km/h`;
+    mostrarDados(dados);
 
-    precipitacao.textContent = `${dados.clima.precipitacao} mm`;
-chuva.textContent = `${dados.clima.chuva} mm`;
-pancadas.textContent = `${dados.clima.pancadas} mm`;
+    mensagem.textContent = "";
 
-    nomeCidade.textContent = dados.cidade;
-    pais.textContent = dados.pais;
+  } catch (erro) {
 
-    console.log(dados);
+    console.error(erro);
 
-} catch (erro) {
-    mensagem.textContent = "Não foi possível conectar com a API.";
-    
-} finally {
-    botaoBuscar.textContent = "Buscar clima";
-    botaoBuscar.disabled = false;
+    mensagem.textContent =
+      "Não foi possível encontrar essa cidade.";
+
+  }
+
 }
-});
+
+
+/* MOSTRAR DADOS */
+
+function mostrarDados(dados) {
+
+  resultado.classList.remove("hidden");
+
+  cidadeNome.textContent = dados.cidade;
+  paisNome.textContent = dados.pais;
+
+  temperatura.textContent = dados.clima.temperatura;
+  umidade.textContent = dados.clima.umidade;
+  vento.textContent = dados.clima.vento;
+  precipitacao.textContent = dados.clima.precipitacao;
+
+  criarMapa(
+    dados.localizacao.latitude,
+    dados.localizacao.longitude,
+    dados.cidade
+  );
+
+}
+
+
+/* MAPA */
+
+function criarMapa(latitude, longitude, cidade) {
+
+  if (!mapa) {
+
+    mapa = L.map("map").setView(
+      [latitude, longitude],
+      12
+    );
+
+    L.tileLayer(
+      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      {
+        attribution:
+          '&copy; OpenStreetMap contributors'
+      }
+    ).addTo(mapa);
+
+  } else {
+
+    mapa.setView(
+      [latitude, longitude],
+      12
+    );
+
+  }
+
+  if (marcador) {
+    mapa.removeLayer(marcador);
+  }
+
+  marcador = L.marker([
+    latitude,
+    longitude
+  ])
+    .addTo(mapa)
+    .bindPopup(
+      `<strong>${cidade}</strong><br>Localização pesquisada`
+    )
+    .openPopup();
+
+}

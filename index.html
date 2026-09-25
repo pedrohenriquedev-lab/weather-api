@@ -1,94 +1,145 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Weather API</title>
+  <title>Clima Seguro</title>
 
-    <link rel="stylesheet" href="style.css">
-    <script src="script.js" defer></script>
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Leaflet -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
 </head>
 
 <body>
 
-    <main class="container">
+  <header class="header">
+    <div class="logo">
+      <span>🌦️</span>
+      <h1>Clima Seguro</h1>
+    </div>
 
-        <section class="weather-app">
+    <p>Clima e prevenção de alagamentos</p>
+  </header>
 
-            <h1>Weather API</h1>
+  <main class="container">
 
-            <p class="subtitle">
-                Consulte o clima de qualquer cidade
+    <section class="search-section">
+      <h2>Consulte uma cidade</h2>
+
+      <div class="search-box">
+        <input
+          type="text"
+          id="cidadeInput"
+          placeholder="Digite uma cidade..."
+        >
+
+        <button id="buscarBtn">
+          Buscar
+        </button>
+      </div>
+
+      <p id="mensagem"></p>
+    </section>
+
+    <section id="resultado" class="resultado hidden">
+
+      <div class="cidade-info">
+        <h2 id="cidadeNome">Recife</h2>
+        <p id="paisNome">Brasil</p>
+      </div>
+
+      <div class="clima-grid">
+
+        <div class="clima-card">
+          <span>🌡️</span>
+          <p>Temperatura</p>
+          <strong id="temperatura">--</strong>
+          <small>°C</small>
+        </div>
+
+        <div class="clima-card">
+          <span>💧</span>
+          <p>Umidade</p>
+          <strong id="umidade">--</strong>
+          <small>%</small>
+        </div>
+
+        <div class="clima-card">
+          <span>💨</span>
+          <p>Vento</p>
+          <strong id="vento">--</strong>
+          <small>km/h</small>
+        </div>
+
+        <div class="clima-card">
+          <span>🌧️</span>
+          <p>Precipitação</p>
+          <strong id="precipitacao">--</strong>
+          <small>mm</small>
+        </div>
+
+      </div>
+
+      <section class="map-section">
+
+        <div class="section-title">
+          <div>
+            <h2>Mapa da cidade</h2>
+            <p>Visualização da localização e áreas de risco</p>
+          </div>
+
+          <span class="status">
+            🟢 Monitorando
+          </span>
+        </div>
+
+        <div id="map"></div>
+
+      </section>
+
+      <section class="risk-section">
+
+        <div class="section-title">
+          <div>
+            <h2>⚠️ Áreas de risco</h2>
+            <p>Pontos que poderão receber monitoramento de alagamentos</p>
+          </div>
+        </div>
+
+        <div class="risk-info">
+          <span>🌧️</span>
+
+          <div>
+            <h3>Monitoramento de alagamentos</h3>
+            <p>
+              Em uma próxima etapa, o sistema poderá apresentar
+              pontos historicamente afetados por alagamentos e
+              novos registros feitos pelos usuários.
             </p>
+          </div>
+        </div>
 
-            <div class="search-area">
+      </section>
 
-                <input
-                    type="text"
-                    id="cidade"
-                    placeholder="Digite uma cidade..."
-                >
+    </section>
 
-                <button id="buscar">
-                    Buscar clima
-                </button>
+  </main>
 
-            </div>
+  <footer>
+    <p>Clima Seguro • Projeto acadêmico de Cidade Inteligente</p>
+  </footer>
 
-            <p id="mensagem"></p>
+  <!-- Leaflet -->
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+  </script>
 
-            <section id="resultado" class="resultado">
-
-                <h2 id="nome-cidade">Recife</h2>
-
-                <p id="pais">Brasil</p>
-
-           <div class="weather-cards">
-
-    <div class="weather-card">
-        <span>🌡️</span>
-        <h3>Temperatura</h3>
-        <p id="temperatura">-- °C</p>
-    </div>
-
-    <div class="weather-card">
-        <span>💧</span>
-        <h3>Umidade</h3>
-        <p id="umidade">-- %</p>
-    </div>
-
-    <div class="weather-card">
-        <span>💨</span>
-        <h3>Vento</h3>
-        <p id="vento">-- km/h</p>
-    </div>
-
-    <div class="weather-card">
-        <span>🌧️</span>
-        <h3>Precipitação</h3>
-        <p id="precipitacao">-- mm</p>
-    </div>
-
-    <div class="weather-card">
-        <span>🌦️</span>
-        <h3>Chuva</h3>
-        <p id="chuva">-- mm</p>
-    </div>
-
-    <div class="weather-card">
-        <span>⛈️</span>
-        <h3>Pancadas</h3>
-        <p id="pancadas">-- mm</p>
-    </div>
-
-</div>
-
-            </section>
-
-        </section>
-
-    </main>
+  <script src="script.js"></script>
 
 </body>
 </html>
