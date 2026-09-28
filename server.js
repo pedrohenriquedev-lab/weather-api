@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const { pontosRisco } = require("./data/bairros");
 
 const app = express();
 
@@ -42,7 +43,7 @@ app.get("/weather/:cidade", async (req, res) => {
 
     const dadosClima = await respostaClima.json();
 
-    res.json({
+        res.json({
       cidade: resultado.name,
       pais: resultado.country,
       localizacao: {
@@ -56,9 +57,12 @@ app.get("/weather/:cidade", async (req, res) => {
         precipitacao: dadosClima.current.precipitation,
         chuva: dadosClima.current.rain,
         pancadas: dadosClima.current.showers
-      }
+      },
+      pontosRisco: pontosRisco.filter(
+        (ponto) =>
+          ponto.cidade.toLowerCase() === resultado.name.toLowerCase()
+      )
     });
-
   } catch (erro) {
     console.error(erro);
 
