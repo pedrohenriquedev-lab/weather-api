@@ -1,128 +1,485 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Clima Seguro</title>
+  <title>Alerta de Alagamento</title>
 
-  <link rel="stylesheet" href="style.css">
-
-  <!-- Leaflet -->
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  />
+  >
+
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
+  <!-- BOTÃO MODO CLARO / ESCURO -->
+
+  <button
+    id="darkModeToggle"
+    class="dark-mode-toggle"
+    type="button"
+    aria-label="Alternar modo claro e escuro"
+  >
+    🌙
+  </button>
+
+
+  <!-- HEADER -->
+
   <header class="header">
+
     <div class="logo">
-      <span>🌦️</span>
-      <h1>Clima Seguro</h1>
+      <span>🌧️</span>
+
+      <h1>Alerta de Alagamento</h1>
     </div>
 
-    <p>Clima e prevenção de alagamentos</p>
+    <p>
+      Monitoramento climático e prevenção de alagamentos
+    </p>
+
   </header>
+
+
+  <!-- CONTEÚDO -->
 
   <main class="container">
 
+    <!-- BUSCA -->
+
     <section class="search-section">
-      <h2>Consulte uma cidade</h2>
+
+      <h2>Consultar cidade</h2>
+
+      <p>
+        Digite o nome de uma cidade para consultar as condições
+        meteorológicas e visualizar áreas de risco de inundação.
+      </p>
 
       <div class="search-box">
+
         <input
           type="text"
           id="cidadeInput"
-          placeholder="Digite uma cidade..."
+          placeholder="Ex: Recife, São Paulo, Londres..."
         >
 
-        <button id="buscarBtn">
-          Buscar
+        <button
+          id="buscarBtn"
+          type="button"
+        >
+          🔎 Consultar
         </button>
+
+        <button
+          id="geoBtn"
+          type="button"
+        >
+          📍 Minha posição
+        </button>
+
       </div>
 
-      <p id="mensagem"></p>
+      <div id="mensagem"></div>
+
     </section>
 
-    <section id="resultado" class="resultado hidden">
+
+    <!-- RESULTADO -->
+
+    <section id="resultado" class="hidden">
+
+      <!-- INFORMAÇÕES DA CIDADE -->
 
       <div class="cidade-info">
-        <h2 id="cidadeNome">Recife</h2>
-        <p id="paisNome">Brasil</p>
+
+        <h2 id="cidadeNome">
+          --
+        </h2>
+
+        <p id="paisNome">
+          --
+        </p>
+
       </div>
+
+
+      <!-- CLIMA -->
 
       <div class="clima-grid">
 
         <div class="clima-card">
+
           <span>🌡️</span>
-          <p>Temperatura</p>
-          <strong id="temperatura">--</strong>
-          <small>°C</small>
+
+          <p>
+            Temperatura
+          </p>
+
+          <strong id="temperatura">
+            --
+          </strong>
+
         </div>
 
+
         <div class="clima-card">
+
           <span>💧</span>
-          <p>Umidade</p>
-          <strong id="umidade">--</strong>
-          <small>%</small>
+
+          <p>
+            Umidade
+          </p>
+
+          <strong id="umidade">
+            --
+          </strong>
+
         </div>
 
+
         <div class="clima-card">
+
           <span>💨</span>
-          <p>Vento</p>
-          <strong id="vento">--</strong>
-          <small>km/h</small>
+
+          <p>
+            Vento
+          </p>
+
+          <strong id="vento">
+            --
+          </strong>
+
         </div>
 
+
         <div class="clima-card">
+
           <span>🌧️</span>
-          <p>Precipitação</p>
-          <strong id="precipitacao">--</strong>
-          <small>mm</small>
+
+          <p>
+            Precipitação
+          </p>
+
+          <strong id="precipitacao">
+            --
+          </strong>
+
+        </div>
+
+
+        <div class="clima-card">
+
+          <span>☔</span>
+
+          <p>
+            Chuva
+          </p>
+
+          <strong id="chuva">
+            --
+          </strong>
+
+        </div>
+
+
+        <div class="clima-card">
+
+          <span>⛈️</span>
+
+          <p>
+            Pancadas
+          </p>
+
+          <strong id="pancadas">
+            --
+          </strong>
+
         </div>
 
       </div>
 
+
+      <!-- MAPA -->
+
       <section class="map-section">
 
         <div class="section-title">
+
           <div>
-            <h2>Mapa da cidade</h2>
-            <p>Visualização da localização e áreas de risco</p>
+
+            <h2>
+              Mapa de risco de inundação
+            </h2>
+
+            <p>
+              Visualização global de áreas potencialmente inundáveis.
+            </p>
+
           </div>
 
-          <span class="status">
-            🟢 Monitorando
-          </span>
+          <div class="status">
+            🌎 Risco global
+          </div>
+
         </div>
 
-        <div id="map"></div>
+
+        <!-- FILTROS -->
+
+        <div class="filter-group">
+
+          <button
+            class="filter-btn active"
+            data-filter="todos"
+            type="button"
+          >
+            Todos
+          </button>
+
+          <button
+            class="filter-btn"
+            data-filter="Alto"
+            type="button"
+          >
+            🔴 Alto
+          </button>
+
+          <button
+            class="filter-btn"
+            data-filter="Médio"
+            type="button"
+          >
+            🟠 Médio
+          </button>
+
+          <button
+            class="filter-btn"
+            data-filter="Baixo"
+            type="button"
+          >
+            🟡 Baixo
+          </button>
+
+        </div>
+
+
+        <div
+          id="mapa"
+          class="mapa"
+        ></div>
 
       </section>
+
+
+      <!-- SOBRE O MAPA -->
+
+      <section class="risk-section">
+
+        <div class="risk-info">
+
+          <span>
+            🌊
+          </span>
+
+          <div>
+
+            <h3>
+              Sobre o mapa de risco
+            </h3>
+
+            <p>
+              A camada global representa áreas potencialmente inundáveis
+              com base em modelagem de risco de inundação.
+              Ela não significa que o local esteja alagado neste momento.
+            </p>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- MONITORAMENTO -->
 
       <section class="risk-section">
 
         <div class="section-title">
-          <div>
-            <h2>⚠️ Áreas de risco</h2>
-            <p>Pontos que poderão receber monitoramento de alagamentos</p>
-          </div>
-        </div>
-
-        <div class="risk-info">
-          <span>🌧️</span>
 
           <div>
-            <h3>Monitoramento de alagamentos</h3>
+
+            <h2>
+              Monitorar local
+            </h2>
+
             <p>
-              Em uma próxima etapa, o sistema poderá apresentar
-              pontos historicamente afetados por alagamentos e
-              novos registros feitos pelos usuários.
+              Digite um bairro ou localidade para acompanhar a região.
             </p>
+
           </div>
+
         </div>
+
+
+        <div class="search-box">
+  <input
+    type="text"
+    id="bairroInput"
+    placeholder="Ex: Ibura, Boa Viagem..."
+  >
+
+  <button
+    id="monitorarBtn"
+    type="button"
+  >
+    📍 Monitorar local
+  </button>
+</div>
+
+<p
+  id="monitorStatus"
+  style="margin-top: 15px;"
+></p>
+
+<div
+  id="alerta"
+  class="alert-box"
+  style="display: none; margin-top: 15px;"
+></div>
+
+<button
+  id="toggleOcorrenciasBtn"
+  type="button"
+  class="filter-btn"
+  style="margin-top: 15px;"
+>
+  Mostrar ocorrências
+</button>
+
+      </section>
+
+
+      <!-- OCORRÊNCIAS -->
+
+      <section class="risk-section">
+
+        <div class="section-title">
+
+          <div>
+
+            <h2>
+              Ocorrências da comunidade
+            </h2>
+
+            <p>
+              Pontos registrados pelos próprios usuários.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div
+          id="listaRiscos"
+          class="risk-list"
+        >
+
+          <p>
+            Nenhum ponto comunitário registrado ainda.
+          </p>
+
+        </div>
+
+      </section>
+
+
+      <!-- REGISTRO -->
+
+      <section class="risk-section">
+
+        <div class="section-title">
+
+          <div>
+
+            <h2>
+              Registrar ocorrência
+            </h2>
+
+            <p>
+              Viu um ponto de alagamento?
+              Registre para contribuir com a comunidade.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <form id="cadastroForm">
+
+          <input
+            type="text"
+            name="nome"
+            placeholder="Nome do local"
+            required
+          >
+
+          <input
+            type="text"
+            name="cidade"
+            placeholder="Cidade"
+            required
+          >
+
+          <input
+            type="text"
+            name="bairro"
+            placeholder="Bairro"
+            required
+          >
+
+          <select
+            name="nivel"
+            required
+          >
+
+            <option value="Alto">
+              🔴 Alto
+            </option>
+
+            <option value="Médio">
+              🟠 Médio
+            </option>
+
+            <option value="Baixo">
+              🟡 Baixo
+            </option>
+
+          </select>
+
+
+          <textarea
+            name="descricao"
+            placeholder="Descreva o que aconteceu..."
+            rows="4"
+          ></textarea>
+
+
+          <button type="submit">
+            📍 Registrar ponto
+          </button>
+
+
+          <p id="cadastroMensagem"></p>
+
+        </form>
 
       </section>
 
@@ -130,16 +487,32 @@
 
   </main>
 
+
+  <!-- FOOTER -->
+
   <footer>
-    <p>Clima Seguro • Projeto acadêmico de Cidade Inteligente</p>
+
+    <p>
+      Alerta de Alagamento • Projeto acadêmico
+    </p>
+
+    <p>
+      Dados meteorológicos: Open-Meteo •
+      Mapa: OpenStreetMap / Leaflet •
+      Risco: GloFAS / Copernicus
+    </p>
+
   </footer>
 
-  <!-- Leaflet -->
+
+  <!-- LEAFLET -->
+
   <script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
-  </script>
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  ></script>
 
   <script src="script.js"></script>
 
 </body>
+
 </html>
