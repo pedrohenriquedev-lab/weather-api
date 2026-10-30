@@ -1,13 +1,21 @@
+
 {
-  "name": "weather-api",
+  "name": "clima-seguro",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Aplicação web para consulta de condições meteorológicas por cidade e bairro.",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "dev": "node --watch server.js"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "clima",
+    "meteorologia",
+    "open-meteo",
+    "express",
+    "javascript"
+  ],
+  "author": "Pedro Henrique",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
