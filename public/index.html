@@ -1,0 +1,473 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Alerta de Alagamento</title>
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  >
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- HEADER -->
+
+  <header class="header">
+    <div class="header-content">
+
+      <div class="logo">
+        <span class="logo-icon">🌧️</span>
+
+        <div>
+          <h1>Alerta de Alagamento</h1>
+          <small>INFORMAÇÃO PARA PREVENIR</small>
+        </div>
+      </div>
+
+      <button
+        id="darkModeToggle"
+        class="dark-mode-toggle"
+        type="button"
+        aria-label="Alternar modo claro e escuro"
+      >
+        🌙
+      </button>
+
+    </div>
+  </header>
+
+
+  <!-- CONTEÚDO PRINCIPAL -->
+
+  <main class="container">
+
+    <!-- BANNER INICIAL -->
+
+    <section class="hero">
+
+      <div class="hero-content">
+
+        <span class="hero-label">
+          MONITORAMENTO E PREVENÇÃO
+        </span>
+
+        <h2>
+          Fique atento.
+          <span>Previna-se dos alagamentos.</span>
+        </h2>
+
+        <p>
+          Consulte as condições meteorológicas da sua região,
+          acompanhe áreas de risco e ajude a proteger sua comunidade.
+        </p>
+
+      </div>
+
+      <div class="hero-icon">
+        🌧️
+      </div>
+
+    </section>
+
+
+    <!-- CONSULTAR CIDADE -->
+
+    <section class="search-section">
+
+      <div class="search-heading">
+
+        <h2>
+          01 <span>Consultar cidade</span>
+        </h2>
+
+        <p>
+          Informe a cidade que deseja consultar.
+        </p>
+
+      </div>
+
+      <div class="search-box">
+
+        <input
+          type="text"
+          id="cidadeInput"
+          placeholder="Ex: Recife, São Paulo, Londres..."
+        >
+
+        <button
+          id="buscarBtn"
+          type="button"
+        >
+          🔎 Consultar cidade
+        </button>
+
+      </div>
+
+      <div id="mensagem"></div>
+
+    </section>
+
+
+    <!-- RESULTADO -->
+
+    <section id="resultado" class="hidden">
+
+      <!-- INFORMAÇÕES DA CIDADE -->
+
+      <div class="cidade-info">
+
+        <h2 id="cidadeNome">--</h2>
+
+        <p id="paisNome">--</p>
+
+      </div>
+
+
+      <!-- INFORMAÇÕES CLIMÁTICAS -->
+
+      <div class="clima-grid">
+
+        <div class="clima-card">
+          <span>🌡️</span>
+          <p>Temperatura</p>
+          <strong id="temperatura">--</strong>
+        </div>
+
+        <div class="clima-card">
+          <span>💧</span>
+          <p>Umidade</p>
+          <strong id="umidade">--</strong>
+        </div>
+
+        <div class="clima-card">
+          <span>💨</span>
+          <p>Vento</p>
+          <strong id="vento">--</strong>
+        </div>
+
+        <div class="clima-card">
+          <span>🌧️</span>
+          <p>Precipitação</p>
+          <strong id="precipitacao">--</strong>
+        </div>
+
+        <div class="clima-card">
+          <span>☔</span>
+          <p>Chuva</p>
+          <strong id="chuva">--</strong>
+        </div>
+
+        <div class="clima-card">
+          <span>⛈️</span>
+          <p>Pancadas</p>
+          <strong id="pancadas">--</strong>
+        </div>
+
+      </div>
+
+
+      <!-- MAPA DE RISCO -->
+
+      <section class="map-section">
+
+        <div class="section-title">
+
+          <div>
+            <h2>Mapa de risco de inundação</h2>
+
+            <p>
+              Visualização global de áreas potencialmente inundáveis.
+            </p>
+          </div>
+
+          <div class="status">
+            🌎 Risco global
+          </div>
+
+        </div>
+
+
+        <!-- FILTROS DO MAPA -->
+
+        <div class="filter-group">
+
+          <button
+            class="filter-btn active"
+            data-filter="todos"
+            type="button"
+          >
+            Todos
+          </button>
+
+          <button
+            class="filter-btn"
+            data-filter="Alto"
+            type="button"
+          >
+            🔴 Alto
+          </button>
+
+          <button
+            class="filter-btn"
+            data-filter="Médio"
+            type="button"
+          >
+            🟠 Médio
+          </button>
+
+          <button
+            class="filter-btn"
+            data-filter="Baixo"
+            type="button"
+          >
+            🟡 Baixo
+          </button>
+
+        </div>
+
+
+        <div
+          id="mapa"
+          class="mapa"
+        ></div>
+
+      </section>
+
+
+      <!-- SOBRE O MAPA -->
+
+      <section class="risk-section">
+
+        <div class="risk-info">
+
+          <span>🌊</span>
+
+          <div>
+
+            <h3>Sobre o mapa de risco</h3>
+
+            <p>
+              A camada global representa áreas potencialmente inundáveis
+              com base em modelagem de risco de inundação.
+              Ela não significa que o local esteja alagado neste momento.
+            </p>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- MONITORAMENTO LOCAL -->
+
+      <section class="risk-section">
+
+        <div class="section-title">
+
+          <div>
+
+            <h2>Monitorar local</h2>
+
+            <p>
+              Digite um bairro ou localidade para acompanhar a região.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div class="search-box">
+
+          <input
+            type="text"
+            id="bairroInput"
+            placeholder="Ex: Ibura, Boa Viagem..."
+          >
+
+          <button
+            id="monitorarBtn"
+            type="button"
+          >
+            📍 Monitorar local
+          </button>
+
+        </div>
+
+
+        <p
+          id="monitorStatus"
+          style="margin-top: 15px;"
+        ></p>
+
+
+        <div
+          id="alerta"
+          class="alert-box"
+          style="display: none; margin-top: 15px;"
+        ></div>
+
+
+        <button
+          id="toggleOcorrenciasBtn"
+          type="button"
+          class="filter-btn"
+          style="margin-top: 15px;"
+        >
+          Mostrar ocorrências
+        </button>
+
+      </section>
+
+
+      <!-- OCORRÊNCIAS DA COMUNIDADE -->
+
+      <section class="risk-section">
+
+        <div class="section-title">
+
+          <div>
+
+            <h2>Ocorrências da comunidade</h2>
+
+            <p>
+              Pontos registrados pelos próprios usuários.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div
+          id="listaRiscos"
+          class="risk-list"
+        >
+
+          <p>
+            Nenhum ponto comunitário registrado ainda.
+          </p>
+
+        </div>
+
+      </section>
+
+
+      <!-- REGISTRAR OCORRÊNCIA -->
+
+      <section class="risk-section">
+
+        <div class="section-title">
+
+          <div>
+
+            <h2>Registrar ocorrência</h2>
+
+            <p>
+              Viu um ponto de alagamento?
+              Registre para contribuir com a comunidade.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <form id="cadastroForm">
+
+          <input
+            type="text"
+            name="nome"
+            placeholder="Nome do local"
+            required
+          >
+
+          <input
+            type="text"
+            name="cidade"
+            placeholder="Cidade"
+            required
+          >
+
+          <input
+            type="text"
+            name="bairro"
+            placeholder="Bairro"
+            required
+          >
+
+
+          <select
+            name="nivel"
+            required
+          >
+
+            <option value="Alto">🔴 Alto</option>
+            <option value="Médio">🟠 Médio</option>
+            <option value="Baixo">🟡 Baixo</option>
+
+          </select>
+
+
+          <textarea
+            name="descricao"
+            placeholder="Descreva o que aconteceu..."
+            rows="4"
+          ></textarea>
+
+
+          <button type="submit">
+            📍 Registrar ponto
+          </button>
+
+
+          <p id="cadastroMensagem"></p>
+
+        </form>
+
+      </section>
+
+    </section>
+
+  </main>
+
+
+  <!-- RODAPÉ -->
+
+  <footer>
+
+    <p>
+      Alerta de Alagamento • Projeto acadêmico
+    </p>
+
+    <p>
+      Dados meteorológicos: Open-Meteo •
+      Mapa: OpenStreetMap / Leaflet •
+      Risco: GloFAS / Copernicus
+    </p>
+
+  </footer>
+
+
+  <!-- BIBLIOTECA DO MAPA -->
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  ></script>
+
+
+  <!-- JAVASCRIPT DO PROJETO -->
+
+  <script src="script.js"></script>
+
+</body>
+</html>

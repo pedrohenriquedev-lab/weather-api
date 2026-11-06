@@ -1,65 +1,53 @@
+# Alerta de Alagamento — Clima Seguro
 
-# Clima Seguro
+Aplicação web para consultar condições meteorológicas, visualizar áreas de risco no mapa e compartilhar relatos comunitários de possíveis alagamentos.
 
-O Clima Seguro é um projeto acadêmico desenvolvido com o objetivo de reunir informações meteorológicas e dados de risco de inundação em uma única interface.
+## Tecnologias
+- HTML5, CSS3 e JavaScript
+- Node.js + Express
+- Open-Meteo (clima e geocodificação)
+- Leaflet + OpenStreetMap (mapa)
+- Camada WMS GloFAS/Copernicus (risco de inundação)
+- Supabase (PostgreSQL compartilhado)
 
-A aplicação permite consultar cidades, visualizar condições climáticas e explorar áreas potencialmente sujeitas a inundações por meio de um mapa interativo.
+## Requisitos
+- Node.js 20.6 ou superior (o script usa `--env-file-if-exists`).
+- Projeto Supabase gratuito ou pago.
 
-## Funcionalidades
+## Instalação no Windows (PowerShell)
+1. Extraia o ZIP e abra a pasta no VS Code.
+2. No terminal, execute `npm.cmd install`.
+3. Copie `.env.example` para `.env`.
+4. Crie um projeto em https://supabase.com/.
+5. No Supabase, abra **SQL Editor**, cole e execute o conteúdo de `supabase/schema.sql`.
+6. No painel do Supabase, abra **Project Settings → API** e copie a Project URL e a chave pública `anon` (ou publishable) para `.env`:
+   - `SUPABASE_URL`
+   - `SUPABASE_ANON_KEY`
+7. Inicie com `npm.cmd start`.
+8. Acesse http://localhost:3000.
 
-- Consulta de cidades pelo nome
-- Informações de temperatura, umidade, vento e precipitação
-- Localização do usuário
-- Mapa interativo
-- Visualização de áreas potencialmente inundáveis
-- Monitoramento de bairros e localidades
-- Registro e visualização de ocorrências
-- Filtros por nível de risco
+## Cadastro comunitário
+Não exige login. Os relatos ficam no banco Supabase e aparecem para todos os visitantes. O servidor valida os campos, nível e coordenadas e limita cada IP a 8 envios por hora (limite em memória, reinicia quando o servidor reinicia). A aplicação não oferece edição ou exclusão pública.
 
-## Tecnologias utilizadas
+**Importante:** a chave `service_role`/secret nunca deve ser colocada no `.env` deste projeto. Use somente a chave pública anon/publishable. Para publicação em larga escala, acrescente CAPTCHA, moderação administrativa, proteção anti-spam persistente e rate limit compartilhado (Redis/serviço equivalente). Relatos de usuários não são confirmação oficial de alagamento.
 
-**Back-end**
-- Node.js
-- Express
+## APIs e fontes
+- Open-Meteo: https://open-meteo.com/
+- OpenStreetMap/Nominatim: https://nominatim.org/
+- Leaflet: https://leafletjs.com/
+- Supabase: https://supabase.com/docs
 
-**Front-end**
-- HTML5
-- CSS3
-- JavaScript
+## Estrutura
+```text
+public/
+  index.html
+  script.js
+  style.css
+server.js
+supabase/schema.sql
+.env.example
+README.md
+```
 
-**APIs e bibliotecas**
-- Open-Meteo: dados meteorológicos e geolocalização
-- OpenStreetMap: dados de mapas e localização
-- Leaflet: exibição do mapa interativo
-- GloFAS / Copernicus: camada de risco de inundação
-
-## Como executar
-
-É necessário ter o Node.js instalado.
-
-1. Clone o repositório:
-   `git clone https://github.com/pedrohenriquedev-lab/weather-api.git`
-
-2. Entre na pasta:
-   `cd weather-api`
-
-3. Instale as dependências:
-   `npm install`
-
-4. Inicie o servidor:
-   `node server.js`
-
-5. Acesse no navegador:
-   `http://localhost:3000`
-
-## Sobre os dados de risco
-
-A camada de inundação apresenta áreas potencialmente suscetíveis a alagamentos com base em dados de modelagem. Ela não representa uma confirmação de que determinado local esteja alagado em tempo real.
-
-## Objetivo do projeto
-
-O Clima Seguro foi desenvolvido como parte dos estudos em Análise e Desenvolvimento de Sistemas, envolvendo integração de APIs, desenvolvimento back-end, manipulação de dados e visualização de informações em mapas.
-
-## Repositório
-
-https://github.com/pedrohenriquedev-lab/weather-api
+## Observação sobre dados
+O antigo arquivo `data/pontos-risco.json` foi removido. O mapa comunitário passa a consultar o banco Supabase; nenhum ponto fictício é semeado automaticamente.

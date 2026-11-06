@@ -1,12 +1,11 @@
-
 {
   "name": "clima-seguro",
-  "version": "1.0.0",
-  "description": "Aplicação web para consulta de condições meteorológicas por cidade e bairro.",
+  "version": "2.0.0",
+  "description": "Plataforma comunitária de monitoramento climático e relatos de risco de alagamento.",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js"
+    "start": "node --env-file-if-exists=.env server.js",
+    "dev": "node --watch --env-file-if-exists=.env server.js"
   },
   "keywords": [
     "clima",
@@ -19,6 +18,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@supabase/supabase-js": "^2.118.0",
     "cors": "^2.8.6",
     "express": "^5.2.1"
   }

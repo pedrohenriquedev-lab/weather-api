@@ -1,353 +1,432 @@
 
+"use strict";
+
 const express = require("express");
 const cors = require("cors");
 const dns = require("node:dns");
+const { createClient } = require("@supabase/supabase-js");
 
 dns.setDefaultResultOrder("ipv4first");
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+
+// ==========================================
+// CONEXÃO COM SUPABASE
+// ==========================================
+
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SECRET_KEY = process.env.SUPABASE_SECRET_KEY;
+
+if (!SUPABASE_URL || !SUPABASE_SECRET_KEY) {
+  throw new Error(
+    "Configure SUPABASE_URL e SUPABASE_SECRET_KEY no arquivo .env."
+  );
+}
+
+const supabase = createClient(
+  SUPABASE_URL,
+  SUPABASE_SECRET_KEY
+);
 
 app.use(cors());
-app.use(express.json());
-app.use(express.static("."));
+app.use(express.json({ limit: "20kb" }));
+app.use(express.static(require("node:path").join(__dirname, "public")));
 
 // ==========================================
-// REQUISIÇÕES COM RETENTATIVAS
+// REQUISIÇÕES EXTERNAS
 // ==========================================
 
-async function fetchComTentativas(url, opcoes = {}, tentativas = 2) {
-  let ultimoErro;
-
-  for (let tentativa = 1; tentativa <= tentativas; tentativa++) {
-    try {
-      const resposta = await fetch(url, {
-        ...opcoes,
-        signal: AbortSignal.timeout(15000)
-      });
-
-      return resposta;
-    } catch (erro) {
-      ultimoErro = erro;
-
-      console.error(
-        `Falha na conexão (tentativa ${tentativa}/${tentativas}):`,
-        erro.cause?.code || erro.message
-      );
-
-      if (tentativa < tentativas) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
-    }
-  }
-
-  throw ultimoErro;
-}
-
-function mensagemErroConexao(erro, servico) {
-  const codigo = erro?.cause?.code || erro?.code || "";
-
-  if (
-    codigo === "UND_ERR_CONNECT_TIMEOUT" ||
-    erro?.name === "TimeoutError" ||
-    erro?.name === "AbortError"
-  ) {
-    return `O serviço de ${servico} demorou para responder. Tente novamente.`;
-  }
-
-  return `Não foi possível consultar ${servico}. Verifique sua conexão e tente novamente.`;
-}
-
-// ==========================================
-// ROTA PRINCIPAL
-// ==========================================
-
-app.get("/", (req, res) => {
-  res.json({
-    mensagem: "Alerta de Alagamento funcionando!"
+async function requisicao(url, opcoes = {}) {
+  const resposta = await fetch(url, {
+    ...opcoes,
+    signal: AbortSignal.timeout(15000)
   });
-});
-
-// ==========================================
-// BUSCAR CIDADE OU ESTADO
-// ==========================================
-
-async function buscarLocal(nome) {
-  const url =
-    "https://geocoding-api.open-meteo.com/v1/search" +
-    `?name=${encodeURIComponent(nome)}` +
-    "&count=100&language=pt&format=json";
-
-  const resposta = await fetchComTentativas(url);
 
   if (!resposta.ok) {
-    throw new Error(
-      `O serviço de localização respondeu com status ${resposta.status}.`
-    );
-  }
-
-  const dados = await resposta.json();
-
-  return dados.results || [];
-}
-
-// ==========================================
-// ESCOLHER LOCAL
-// ==========================================
-
-function escolherLocal(resultados, busca) {
-  if (!resultados.length) {
-    return null;
-  }
-
-  const normalizar = texto =>
-    String(texto || "")
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .trim();
-
-  const termo = normalizar(busca);
-
-  // Prioriza correspondência exata do nome.
-  let resultado = resultados.find(
-    item => normalizar(item.name) === termo
-  );
-
-  if (resultado) {
-    return resultado;
-  }
-
-  // Se a busca for o nome de um estado, tenta
-  // encontrar esse estado no Brasil.
-  resultado = resultados.find(
-    item =>
-      normalizar(item.admin1) === termo &&
-      item.country_code === "BR"
-  );
-
-  if (resultado) {
-    return resultado;
-  }
-
-  // Para nomes ambíguos, prioriza resultados brasileiros.
-  resultado = resultados.find(
-    item => item.country_code === "BR"
-  );
-
-  return resultado || resultados[0];
-}
-
-// ==========================================
-// CONSULTAR CLIMA
-// ==========================================
-
-async function consultarClima(latitude, longitude, dias = 2) {
-  const url =
-    "https://api.open-meteo.com/v1/forecast" +
-    `?latitude=${latitude}` +
-    `&longitude=${longitude}` +
-    "&current=temperature_2m,relative_humidity_2m,wind_speed_10m,precipitation,rain,showers,weather_code" +
-    "&hourly=precipitation,rain,showers,weather_code" +
-    `&forecast_days=${dias}` +
-    "&timezone=auto";
-
-  const resposta = await fetchComTentativas(url);
-
-  if (!resposta.ok) {
-    throw new Error(
-      `A API de clima respondeu com status ${resposta.status}.`
-    );
+    throw new Error(`Serviço externo respondeu com erro ${resposta.status}.`);
   }
 
   return resposta.json();
 }
 
+function validarCoordenadas(latitude, longitude) {
+  return (
+    Number.isFinite(latitude) &&
+    Number.isFinite(longitude) &&
+    latitude >= -90 &&
+    latitude <= 90 &&
+    longitude >= -180 &&
+    longitude <= 180
+  );
+}
+
+function mensagemErro(erro) {
+  console.error(erro);
+  return "Não foi possível concluir a consulta. Tente novamente.";
+}
+
 // ==========================================
-// FORMATAR DADOS CLIMÁTICOS
+// CONSULTA DE CIDADES
 // ==========================================
 
-function formatarClima(dados) {
+async function buscarLocal(cidade) {
+  const url =
+    "https://geocoding-api.open-meteo.com/v1/search" +
+    `?name=${encodeURIComponent(cidade)}` +
+    "&count=10&language=pt&format=json";
+
+  const dados = await requisicao(url);
+
+  if (!dados.results || dados.results.length === 0) {
+    throw new Error("Cidade não encontrada.");
+  }
+
+  return dados.results[0];
+}
+
+// ==========================================
+// CONSULTA METEOROLÓGICA
+// ==========================================
+
+async function consultarClima(latitude, longitude) {
+  const url =
+    "https://api.open-meteo.com/v1/forecast" +
+    `?latitude=${latitude}` +
+    `&longitude=${longitude}` +
+    "&current=temperature_2m,relative_humidity_2m," +
+    "precipitation,rain,showers,wind_speed_10m" +
+    "&timezone=auto";
+
+  const dados = await requisicao(url);
+
+  if (!dados.current) {
+    throw new Error("Dados meteorológicos indisponíveis.");
+  }
+
+  const atual = dados.current;
+
   return {
-    temperatura: dados.current?.temperature_2m ?? null,
-    umidade: dados.current?.relative_humidity_2m ?? null,
-    vento: dados.current?.wind_speed_10m ?? null,
-    precipitacao: dados.current?.precipitation ?? null,
-    chuva: dados.current?.rain ?? null,
-    pancadas: dados.current?.showers ?? null,
-    codigoTempo: dados.current?.weather_code ?? null
+    temperatura: atual.temperature_2m ?? null,
+    umidade: atual.relative_humidity_2m ?? null,
+    vento: atual.wind_speed_10m ?? null,
+    precipitacao: atual.precipitation ?? null,
+    chuva: atual.rain ?? null,
+    pancadas: atual.showers ?? null
   };
 }
 
 // ==========================================
-// CLIMA DA CIDADE
+// ROTA INICIAL
+// ==========================================
+
+app.get("/api/health", (req, res) => {
+  res.json({
+    status: "online",
+    projeto: "Alerta de Alagamento"
+  });
+});
+
+// ==========================================
+// CLIMA POR CIDADE
 // ==========================================
 
 app.get("/weather/:cidade", async (req, res) => {
-  const busca = req.params.cidade.trim();
-
-  if (!busca) {
-    return res.status(400).json({
-      erro: "Digite uma cidade ou estado."
-    });
-  }
-
   try {
-    const resultados = await buscarLocal(busca);
-    const local = escolherLocal(resultados, busca);
+    const cidade = String(req.params.cidade || "").trim();
 
-    if (!local) {
-      return res.status(404).json({
-        erro: `Não foi possível encontrar "${busca}".`
-      });
+    if (!cidade) {
+      return res.status(400).json({ erro: "Informe uma cidade." });
     }
 
-    const dadosClima = await consultarClima(
-      local.latitude,
-      local.longitude,
-      2
+    const local = await buscarLocal(cidade);
+
+    const clima = await consultarClima(
+      Number(local.latitude),
+      Number(local.longitude)
     );
 
-    return res.json({
+    res.json({
       cidade: local.name,
       estado: local.admin1 || "",
       pais: local.country || "",
-      paisCodigo: local.country_code || "",
-      latitude: local.latitude,
-      longitude: local.longitude,
-      tipo: local.feature_code || "",
-      clima: formatarClima(dadosClima),
-      horario: dadosClima.current?.time || null,
-      timezone: dadosClima.timezone || null
+      latitude: Number(local.latitude),
+      longitude: Number(local.longitude),
+      clima
     });
   } catch (erro) {
-    console.error(
-      "Erro na rota /weather:",
-      erro.cause?.code || erro.message
-    );
-
-    const mensagem = erro.message?.includes("status")
-      ? erro.message
-      : mensagemErroConexao(erro, "clima ou localização");
-
-    return res.status(502).json({
-      erro: mensagem
-    });
+    res.status(erro.message === "Cidade não encontrada." ? 404 : 502)
+      .json({ erro: erro.message || mensagemErro(erro) });
   }
 });
 
 // ==========================================
-// CLIMA DO BAIRRO MONITORADO
+// CLIMA POR COORDENADAS
 // ==========================================
 
 app.get("/weather-location", async (req, res) => {
-  const latitude = Number(req.query.latitude);
-  const longitude = Number(req.query.longitude);
-
-  if (
-    !Number.isFinite(latitude) ||
-    !Number.isFinite(longitude) ||
-    latitude < -90 ||
-    latitude > 90 ||
-    longitude < -180 ||
-    longitude > 180
-  ) {
-    return res.status(400).json({
-      erro: "Latitude e longitude inválidas."
-    });
-  }
-
   try {
-    const dados = await consultarClima(
-      latitude,
-      longitude,
-      1
-    );
+    const latitude = Number(req.query.latitude);
+    const longitude = Number(req.query.longitude);
 
-    return res.json({
+    if (!validarCoordenadas(latitude, longitude)) {
+      return res.status(400).json({
+        erro: "Latitude e longitude inválidas."
+      });
+    }
+
+    const url =
+      "https://api.open-meteo.com/v1/forecast" +
+      `?latitude=${latitude}&longitude=${longitude}` +
+      "&current=temperature_2m,relative_humidity_2m," +
+      "precipitation,rain,showers,wind_speed_10m&timezone=auto";
+
+    const dados = await requisicao(url);
+
+    if (!dados.current) {
+      throw new Error("Dados meteorológicos indisponíveis.");
+    }
+
+    const atual = dados.current;
+
+    res.json({
       latitude,
       longitude,
-      horario: dados.current?.time || null,
-      timezone: dados.timezone || null,
-      clima: formatarClima(dados)
+      horario: atual.time,
+      timezone: dados.timezone,
+      clima: {
+        temperatura: atual.temperature_2m ?? null,
+        umidade: atual.relative_humidity_2m ?? null,
+        vento: atual.wind_speed_10m ?? null,
+        precipitacao: atual.precipitation ?? null,
+        chuva: atual.rain ?? null,
+        pancadas: atual.showers ?? null
+      }
     });
   } catch (erro) {
-    console.error(
-      "Erro na rota /weather-location:",
-      erro.cause?.code || erro.message
-    );
-
-    const mensagem = erro.message?.includes("status")
-      ? erro.message
-      : mensagemErroConexao(erro, "clima do local");
-
-    return res.status(502).json({
-      erro: mensagem
-    });
+    res.status(502).json({ erro: mensagemErro(erro) });
   }
 });
 
 // ==========================================
-// GEOCODIFICAR BAIRRO
+// GPS: CONVERTER COORDENADAS EM CIDADE
 // ==========================================
 
-app.get("/geocode/:bairro", async (req, res) => {
-  const bairro = req.params.bairro.trim();
-  const cidade = String(req.query.cidade || "").trim();
-
-  if (!bairro) {
-    return res.status(400).json({
-      erro: "Informe um bairro ou localidade."
-    });
-  }
-
+app.get("/reverse-geocode", async (req, res) => {
   try {
-    const busca = cidade
-      ? `${bairro}, ${cidade}`
-      : bairro;
+    const latitude = Number(req.query.latitude);
+    const longitude = Number(req.query.longitude);
+
+    if (!validarCoordenadas(latitude, longitude)) {
+      return res.status(400).json({
+        erro: "Coordenadas inválidas."
+      });
+    }
 
     const url =
-      "https://nominatim.openstreetmap.org/search" +
-      "?format=json&limit=5&addressdetails=1" +
-      `&q=${encodeURIComponent(busca)}`;
+      "https://nominatim.openstreetmap.org/reverse" +
+      `?lat=${latitude}&lon=${longitude}` +
+      "&format=jsonv2&accept-language=pt-BR";
 
-    const resposta = await fetchComTentativas(url, {
+    const dados = await requisicao(url, {
       headers: {
         "User-Agent": "AlertaDeAlagamento/1.0"
       }
     });
 
-    if (!resposta.ok) {
-      return res.status(502).json({
-        erro: "O serviço de localização está temporariamente indisponível."
-      });
-    }
+    const endereco = dados.address || {};
 
-    const resultados = await resposta.json();
+    const nome =
+      endereco.city ||
+      endereco.town ||
+      endereco.municipality ||
+      endereco.village ||
+      endereco.county;
 
-    if (!resultados || resultados.length === 0) {
+    if (!nome) {
       return res.status(404).json({
-        erro: "Localidade não encontrada. Confira o bairro e a cidade."
+        erro: "Não foi possível identificar sua cidade."
       });
     }
 
-    const local = resultados[0];
-
-    return res.json({
-      nome: local.display_name,
-      latitude: Number(local.lat),
-      longitude: Number(local.lon)
+    res.json({
+      nome,
+      bairro:
+        endereco.suburb ||
+        endereco.neighbourhood ||
+        endereco.quarter ||
+        "",
+      latitude,
+      longitude
     });
   } catch (erro) {
-    console.error(
-      "Erro na rota /geocode:",
-      erro.cause?.code || erro.message
-    );
-
-    return res.status(502).json({
-      erro: mensagemErroConexao(erro, "localização do bairro")
-    });
+    res.status(502).json({ erro: mensagemErro(erro) });
   }
+});
+
+// ==========================================
+// LOCALIZAR BAIRRO
+// ==========================================
+
+app.get("/geocode/:bairro", async (req, res) => {
+  try {
+    const bairro = String(req.params.bairro || "").trim();
+    const cidade = String(req.query.cidade || "").trim();
+
+    if (!bairro || !cidade) {
+      return res.status(400).json({
+        erro: "Informe o bairro e a cidade."
+      });
+    }
+
+    const consulta = `${bairro}, ${cidade}`;
+
+    const url =
+      "https://nominatim.openstreetmap.org/search" +
+      `?q=${encodeURIComponent(consulta)}` +
+      "&format=jsonv2&limit=1&countrycodes=br";
+
+    const dados = await requisicao(url, {
+      headers: {
+        "User-Agent": "AlertaDeAlagamento/1.0"
+      }
+    });
+
+    if (!dados.length) {
+      return res.status(404).json({
+        erro: "Não foi possível localizar esse bairro."
+      });
+    }
+
+    res.json({
+      latitude: Number(dados[0].lat),
+      longitude: Number(dados[0].lon),
+      nome: dados[0].display_name
+    });
+  } catch (erro) {
+    res.status(502).json({ erro: mensagemErro(erro) });
+  }
+});
+
+// ==========================================
+// LISTAR OCORRÊNCIAS DO SUPABASE
+// ==========================================
+
+app.get("/api/occurrences", async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from("occurrences")
+      .select("*")
+      .order("dataRegistro", { ascending: false });
+
+    if (error) {
+      console.error("Erro ao buscar ocorrências:", error);
+      return res.status(500).json({
+        erro: "Não foi possível buscar os relatos."
+      });
+    }
+
+    res.json(data || []);
+  } catch (erro) {
+    res.status(500).json({ erro: mensagemErro(erro) });
+  }
+});
+
+// ==========================================
+// CADASTRAR OCORRÊNCIA NO SUPABASE
+// ==========================================
+
+app.post("/api/occurrences", async (req, res) => {
+  try {
+    const {
+      nome,
+      cidade,
+      bairro,
+      nivel,
+      descricao,
+      latitude,
+      longitude,
+      estado,
+      pais
+    } = req.body || {};
+
+    const niveisValidos = ["Alto", "Médio", "Baixo"];
+
+    if (
+      typeof nome !== "string" ||
+      typeof cidade !== "string" ||
+      typeof bairro !== "string" ||
+      !nome.trim() ||
+      !cidade.trim() ||
+      !bairro.trim() ||
+      !niveisValidos.includes(nivel)
+    ) {
+      return res.status(400).json({
+        erro: "Preencha corretamente nome, cidade, bairro e nível."
+      });
+    }
+
+    const lat = Number(latitude);
+    const lon = Number(longitude);
+
+    if (!validarCoordenadas(lat, lon)) {
+      return res.status(400).json({
+        erro: "As coordenadas do relato são inválidas."
+      });
+    }
+
+    if (
+      typeof descricao !== "string" ||
+      descricao.length > 1000 ||
+      nome.length > 100 ||
+      cidade.length > 100 ||
+      bairro.length > 100
+    ) {
+      return res.status(400).json({
+        erro: "Os campos enviados excedem o tamanho permitido."
+      });
+    }
+
+    const novaOcorrencia = {
+      nome: nome.trim(),
+      cidade: cidade.trim(),
+      bairro: bairro.trim(),
+      nivel,
+      descricao: descricao.trim(),
+      latitude: lat,
+      longitude: lon,
+      estado: String(estado || "").trim(),
+      pais: String(pais || "").trim()
+    };
+
+    const { data, error } = await supabase
+      .from("occurrences")
+      .insert(novaOcorrencia)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Erro ao cadastrar ocorrência:", error);
+      return res.status(500).json({
+        erro: "Não foi possível registrar o relato."
+      });
+    }
+
+    res.status(201).json({
+      mensagem: "Relato registrado com sucesso.",
+      ocorrencia: data
+    });
+  } catch (erro) {
+    res.status(500).json({ erro: mensagemErro(erro) });
+  }
+});
+
+// ==========================================
+// TRATAMENTO DE ROTAS INEXISTENTES
+// ==========================================
+
+app.use("/api", (req, res) => {
+  res.status(404).json({ erro: "Rota da API não encontrada." });
 });
 
 // ==========================================
@@ -355,5 +434,6 @@ app.get("/geocode/:bairro", async (req, res) => {
 // ==========================================
 
 app.listen(PORT, () => {
-  console.log(`Servidor rodando em http://localhost:${PORT}`);
+  console.log(`Alerta de Alagamento rodando na porta ${PORT}`);
+  console.log("Integração com Supabase configurada.");
 });
