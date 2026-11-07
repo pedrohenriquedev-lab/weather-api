@@ -1,53 +1,142 @@
-# Alerta de Alagamento — Clima Seguro
+# Alerta de Alagamento
 
-Aplicação web para consultar condições meteorológicas, visualizar áreas de risco no mapa e compartilhar relatos comunitários de possíveis alagamentos.
+Sistema web desenvolvido para consulta de condições meteorológicas, monitoramento de áreas com risco de alagamento e compartilhamento de ocorrências pela comunidade.
 
-## Tecnologias
-- HTML5, CSS3 e JavaScript
-- Node.js + Express
-- Open-Meteo (clima e geocodificação)
-- Leaflet + OpenStreetMap (mapa)
-- Camada WMS GloFAS/Copernicus (risco de inundação)
-- Supabase (PostgreSQL compartilhado)
+## Acesso à aplicação
 
-## Requisitos
-- Node.js 20.6 ou superior (o script usa `--env-file-if-exists`).
-- Projeto Supabase gratuito ou pago.
+**Aplicação em produção:** https://alerta-de-alagamento.onrender.com
 
-## Instalação no Windows (PowerShell)
-1. Extraia o ZIP e abra a pasta no VS Code.
-2. No terminal, execute `npm.cmd install`.
-3. Copie `.env.example` para `.env`.
-4. Crie um projeto em https://supabase.com/.
-5. No Supabase, abra **SQL Editor**, cole e execute o conteúdo de `supabase/schema.sql`.
-6. No painel do Supabase, abra **Project Settings → API** e copie a Project URL e a chave pública `anon` (ou publishable) para `.env`:
-   - `SUPABASE_URL`
-   - `SUPABASE_ANON_KEY`
-7. Inicie com `npm.cmd start`.
-8. Acesse http://localhost:3000.
+**Repositório:** https://github.com/pedrohenriquedev-lab/alerta-de-alagamento
 
-## Cadastro comunitário
-Não exige login. Os relatos ficam no banco Supabase e aparecem para todos os visitantes. O servidor valida os campos, nível e coordenadas e limita cada IP a 8 envios por hora (limite em memória, reinicia quando o servidor reinicia). A aplicação não oferece edição ou exclusão pública.
+## Sobre o projeto
 
-**Importante:** a chave `service_role`/secret nunca deve ser colocada no `.env` deste projeto. Use somente a chave pública anon/publishable. Para publicação em larga escala, acrescente CAPTCHA, moderação administrativa, proteção anti-spam persistente e rate limit compartilhado (Redis/serviço equivalente). Relatos de usuários não são confirmação oficial de alagamento.
+O Alerta de Alagamento é uma aplicação web que tem como objetivo auxiliar no acompanhamento de condições climáticas e na identificação de regiões com possíveis riscos de inundação.
 
-## APIs e fontes
-- Open-Meteo: https://open-meteo.com/
-- OpenStreetMap/Nominatim: https://nominatim.org/
-- Leaflet: https://leafletjs.com/
-- Supabase: https://supabase.com/docs
+A plataforma permite consultar informações meteorológicas por localização, visualizar dados relacionados ao risco de alagamento e compartilhar ocorrências, contribuindo para a disseminação de informações relevantes à população.
 
-## Estrutura
-```text
-public/
-  index.html
-  script.js
-  style.css
-server.js
-supabase/schema.sql
-.env.example
-README.md
+## Funcionalidades
+
+- Consulta de condições meteorológicas por cidade.
+- Exibição de temperatura, umidade, velocidade do vento e precipitação.
+- Visualização de mapa com informações sobre riscos de inundação.
+- Monitoramento de regiões e bairros.
+- Registro e compartilhamento de ocorrências em áreas de risco.
+- Armazenamento de informações em banco de dados.
+
+## Tecnologias utilizadas
+
+**Front-end**
+- HTML5
+- CSS3
+- JavaScript
+
+**Back-end**
+- Node.js
+- Express.js
+
+**Banco de dados**
+- Supabase
+
+**Hospedagem**
+- Render
+
+## Arquitetura e infraestrutura
+
+### Back-end — Node.js e Express.js
+
+Responsável pelo processamento das requisições, disponibilização das rotas da aplicação e comunicação com os serviços externos e o banco de dados.
+
+### Banco de dados — Supabase
+
+Utilizado para armazenamento e gerenciamento das informações da aplicação. A comunicação com o banco de dados é realizada pelo servidor, utilizando variáveis de ambiente para proteger as credenciais de acesso.
+
+O arquivo `supabase/schema.sql` contém a estrutura SQL utilizada na configuração do banco de dados.
+
+### Hospedagem — Render
+
+O servidor da aplicação está hospedado no Render, permitindo que o sistema seja acessado publicamente pela internet.
+
+**Endereço de produção:** https://alerta-de-alagamento.onrender.com
+
+A aplicação utiliza o plano gratuito do Render, que pode suspender temporariamente a execução do serviço após períodos de inatividade.
+
+## Execução local
+
+### Pré-requisitos
+
+- Node.js
+- npm
+- Projeto configurado no Supabase
+
+### 1. Clonar o repositório
+
+```bash
+git clone https://github.com/pedrohenriquedev-lab/alerta-de-alagamento.git
 ```
 
-## Observação sobre dados
-O antigo arquivo `data/pontos-risco.json` foi removido. O mapa comunitário passa a consultar o banco Supabase; nenhum ponto fictício é semeado automaticamente.
+### 2. Acessar o diretório
+
+```bash
+cd alerta-de-alagamento
+```
+
+### 3. Instalar as dependências
+
+```bash
+npm install
+```
+
+### 4. Configurar as variáveis de ambiente
+
+Crie um arquivo `.env` na raiz do projeto, utilizando o `.env.example` como referência.
+
+Configure as seguintes variáveis:
+
+```env
+PORT=3000
+SUPABASE_URL=SUA_URL_DO_SUPABASE
+SUPABASE_SECRET_KEY=SUA_CHAVE_SECRETA_DO_SUPABASE
+```
+
+Substitua os valores de exemplo pelas credenciais correspondentes ao seu projeto Supabase.
+
+As credenciais não devem ser compartilhadas ou enviadas ao repositório GitHub.
+
+### 5. Executar a aplicação
+
+```bash
+npm start
+```
+
+Após iniciar o servidor, acesse:
+
+```text
+http://localhost:3000
+```
+
+## Estrutura do projeto
+
+```text
+alerta-de-alagamento/
+│
+├── public/
+│   ├── index.html
+│   ├── script.js
+│   └── style.css
+│
+├── supabase/
+│   └── schema.sql
+│
+├── server.js
+├── package.json
+├── package-lock.json
+├── .env.example
+├── .gitignore
+└── README.md
+```
+
+## Objetivo acadêmico
+
+O projeto foi desenvolvido no contexto acadêmico do curso de Análise e Desenvolvimento de Sistemas, com o propósito de aplicar conhecimentos de desenvolvimento web, integração entre front-end e back-end, manipulação de dados, utilização de serviços em nuvem e publicação de aplicações web.
+
+A proposta também busca demonstrar como soluções tecnológicas podem contribuir para o monitoramento de riscos ambientais e para o acesso a informações de interesse público.
